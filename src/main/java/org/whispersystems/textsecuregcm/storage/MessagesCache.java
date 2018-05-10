@@ -352,7 +352,7 @@ public class MessagesCache implements Managed {
     private final TimeUnit      delayTimeUnit;
 
     private final PubSubManager   pubSubManager;
-    private final PushSender      pushSender;
+    private final PushSender pushSender;
     private final AccountsManager accountsManager;
 
     private final GetOperation    getOperation;

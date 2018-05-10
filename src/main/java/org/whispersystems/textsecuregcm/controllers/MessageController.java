@@ -70,7 +70,7 @@ public class MessageController {
   private final Logger logger = LoggerFactory.getLogger(MessageController.class);
 
   private final RateLimiters           rateLimiters;
-  private final PushSender             pushSender;
+  private final PushSender pushSender;
   private final ReceiptSender          receiptSender;
   private final FederatedClientManager federatedClientManager;
   private final AccountsManager        accountsManager;
@@ -216,7 +216,6 @@ public class MessageController {
       if (source.getRelay().isPresent()) {
         messageBuilder.setRelay(source.getRelay().get());
       }
-
       pushSender.sendMessage(destinationAccount, destinationDevice, messageBuilder.build(), incomingMessage.isSilent());
     } catch (NotPushRegisteredException e) {
       if (destinationDevice.isMaster()) throw new NoSuchUserException(e);

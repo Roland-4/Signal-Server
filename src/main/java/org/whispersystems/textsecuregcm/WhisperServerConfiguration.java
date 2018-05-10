@@ -17,20 +17,8 @@
 package org.whispersystems.textsecuregcm;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.whispersystems.textsecuregcm.configuration.ApnConfiguration;
-import org.whispersystems.textsecuregcm.configuration.FederationConfiguration;
-import org.whispersystems.textsecuregcm.configuration.GcmConfiguration;
-import org.whispersystems.textsecuregcm.configuration.MaxDeviceConfiguration;
-import org.whispersystems.textsecuregcm.configuration.MessageCacheConfiguration;
-import org.whispersystems.textsecuregcm.configuration.ProfilesConfiguration;
-import org.whispersystems.textsecuregcm.configuration.PushConfiguration;
-import org.whispersystems.textsecuregcm.configuration.RateLimitsConfiguration;
-import org.whispersystems.textsecuregcm.configuration.RedPhoneConfiguration;
-import org.whispersystems.textsecuregcm.configuration.RedisConfiguration;
-import org.whispersystems.textsecuregcm.configuration.AttachmentsConfiguration;
-import org.whispersystems.textsecuregcm.configuration.TestDeviceConfiguration;
-import org.whispersystems.textsecuregcm.configuration.TurnConfiguration;
-import org.whispersystems.textsecuregcm.configuration.TwilioConfiguration;
+import com.fasterxml.jackson.jaxrs.json.annotation.JSONP;
+import org.whispersystems.textsecuregcm.configuration.*;
 import org.whispersystems.websocket.configuration.WebSocketConfiguration;
 
 import javax.validation.Valid;
@@ -138,6 +126,10 @@ public class WhisperServerConfiguration extends Configuration {
   @JsonProperty
   private ApnConfiguration apn;
 
+  @Valid
+  @JsonProperty
+  private S3Configuration s3;
+
   public WebSocketConfiguration getWebSocketConfiguration() {
     return webSocket;
   }
@@ -206,6 +198,10 @@ public class WhisperServerConfiguration extends Configuration {
     return profiles;
   }
 
+  public S3Configuration getS3Configuration() {
+    return s3;
+  }
+
   public Map<String, Integer> getTestDevices() {
     Map<String, Integer> results = new HashMap<>();
 
@@ -227,5 +223,6 @@ public class WhisperServerConfiguration extends Configuration {
 
     return results;
   }
+
 
 }

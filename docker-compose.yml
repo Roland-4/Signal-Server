@@ -1,0 +1,37 @@
+version: '2'
+
+services:
+
+  redis:
+    image: redis:3-alpine
+    ports:
+      - "6379:6379"
+
+  s3:
+    image: lphoward/fake-s3
+    ports:
+      - "4569:4569"
+    volumes:
+      - ./docker-home/s3:/fakes3_root
+
+  accountdb:
+    image: postgres:10-alpine
+    ports:
+      - "55432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=signal
+    volumes:
+      - ./docker-home/accountdb:/var/lib/postgresql/data
+
+  messagedb:
+      image: postgres:10-alpine
+      ports:
+        - "5432:5432"
+      environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=admin
+        - POSTGRES_DB=signal
+      volumes:
+        - ./docker-home/messagedb:/var/lib/postgresql/data

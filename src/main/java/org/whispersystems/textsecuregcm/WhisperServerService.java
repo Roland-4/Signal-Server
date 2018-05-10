@@ -16,6 +16,12 @@
  */
 package org.whispersystems.textsecuregcm;
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.client.builder.AwsClientBuilder;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
@@ -57,9 +63,7 @@ import org.whispersystems.textsecuregcm.metrics.NetworkReceivedGauge;
 import org.whispersystems.textsecuregcm.metrics.NetworkSentGauge;
 import org.whispersystems.textsecuregcm.providers.RedisClientFactory;
 import org.whispersystems.textsecuregcm.providers.RedisHealthCheck;
-import org.whispersystems.textsecuregcm.push.APNSender;
-import org.whispersystems.textsecuregcm.push.ApnFallbackManager;
-import org.whispersystems.textsecuregcm.push.GCMSender;
+import org.whispersystems.textsecuregcm.push.DummyPushSender;
 import org.whispersystems.textsecuregcm.push.PushSender;
 import org.whispersystems.textsecuregcm.push.ReceiptSender;
 import org.whispersystems.textsecuregcm.push.WebsocketSender;
@@ -173,33 +177,54 @@ public class WhisperServerService extends Application<WhisperServerConfiguration
     DeadLetterHandler          deadLetterHandler          = new DeadLetterHandler(messagesManager);
     DispatchManager            dispatchManager            = new DispatchManager(cacheClientFactory, Optional.of(deadLetterHandler));
     PubSubManager              pubSubManager              = new PubSubManager(cacheClient, dispatchManager);
-    APNSender                  apnSender                  = new APNSender(accountsManager, config.getApnConfiguration());
-    GCMSender                  gcmSender                  = new GCMSender(accountsManager, config.getGcmConfiguration().getApiKey());
+    //APNSender                  apnSender                  = new APNSender(accountsManager, config.getApnConfiguration());
+    //GCMSender                  gcmSender                  = new GCMSender(accountsManager, config.getGcmConfiguration().getApiKey());
     WebsocketSender            websocketSender            = new WebsocketSender(messagesManager, pubSubManager);
     AccountAuthenticator       deviceAuthenticator        = new AccountAuthenticator(accountsManager                 );
     FederatedPeerAuthenticator federatedPeerAuthenticator = new FederatedPeerAuthenticator(config.getFederationConfiguration());
     RateLimiters               rateLimiters               = new RateLimiters(config.getLimitsConfiguration(), cacheClient);
 
-    ApnFallbackManager       apnFallbackManager  = new ApnFallbackManager(apnSender, pubSubManager);
-    TwilioSmsSender          twilioSmsSender     = new TwilioSmsSender(config.getTwilioConfiguration());
-    SmsSender                smsSender           = new SmsSender(twilioSmsSender);
-    UrlSigner                urlSigner           = new UrlSigner(config.getAttachmentsConfiguration());
-    PushSender               pushSender          = new PushSender(apnFallbackManager, gcmSender, apnSender, websocketSender, config.getPushConfiguration().getQueueSize());
-    ReceiptSender            receiptSender       = new ReceiptSender(accountsManager, pushSender, federatedClientManager);
-    TurnTokenGenerator       turnTokenGenerator  = new TurnTokenGenerator(config.getTurnConfiguration());
+    //ApnFallbackManager        apnFallbackManager  = new ApnFallbackManager(apnSender, pubSubManager);
+    TwilioSmsSender             twilioSmsSender     = new TwilioSmsSender(config.getTwilioConfiguration());
+    SmsSender                   smsSender           = new SmsSender(twilioSmsSender);
+    UrlSigner                   urlSigner           = new UrlSigner(config.getAttachmentsConfiguration());
+    //PushSender                pushSender          = new PushSender(apnFallbackManager, gcmSender, apnSender, websocketSender, config.getPushConfiguration().getQueueSize());
+    PushSender                  pushSender          = new DummyPushSender(websocketSender);
+    ReceiptSender               receiptSender       = new ReceiptSender(accountsManager, pushSender, federatedClientManager);
+    TurnTokenGenerator          turnTokenGenerator  = new TurnTokenGenerator(config.getTurnConfiguration());
 
-    messagesCache.setPubSubManager(pubSubManager, pushSender);
+    //messagesCache.setPubSubManager(pubSubManager, pushSender);
 
-    apnSender.setApnFallbackManager(apnFallbackManager);
-    environment.lifecycle().manage(apnFallbackManager);
+    //apnSender.setApnFallbackManager(apnFallbackManager);
+    //environment.lifecycle().manage(apnFallbackManager);
     environment.lifecycle().manage(pubSubManager);
-    environment.lifecycle().manage(pushSender);
+    //environment.lifecycle().manage(pushSender);
     environment.lifecycle().manage(messagesCache);
+
+    final String s3EndpointOverride = config.getS3Configuration().getEndpointOverride();
+    final AmazonS3ClientBuilder s3clientBuilder = AmazonS3Client.builder();
+    if( s3EndpointOverride!=null ) {
+      s3clientBuilder
+              .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(
+                      config.getS3Configuration().getEndpointOverride(),
+                      config.getProfilesConfiguration().getRegion())
+              )
+
+              .build();
+    } else {
+      s3clientBuilder.withRegion(config.getProfilesConfiguration().getRegion());
+    }
+    s3clientBuilder.withCredentials(new AWSStaticCredentialsProvider(
+          new BasicAWSCredentials(
+                  config.getProfilesConfiguration().getAccessKey(),
+                  config.getProfilesConfiguration().getAccessSecret()))
+    );
+    final AmazonS3 s3client = s3clientBuilder.build();
 
     AttachmentController attachmentController = new AttachmentController(rateLimiters, federatedClientManager, urlSigner);
     KeysController       keysController       = new KeysController(rateLimiters, keys, accountsManager, federatedClientManager);
     MessageController    messageController    = new MessageController(rateLimiters, pushSender, receiptSender, accountsManager, messagesManager, federatedClientManager);
-    ProfileController    profileController    = new ProfileController(rateLimiters , accountsManager, config.getProfilesConfiguration());
+    ProfileController    profileController    = new ProfileController(rateLimiters , accountsManager, config.getProfilesConfiguration(), s3client);
 
     environment.jersey().register(new AuthDynamicFeature(new BasicCredentialAuthFilter.Builder<Account>()
                                                              .setAuthenticator(deviceAuthenticator)

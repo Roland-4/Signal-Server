@@ -1,5 +1,6 @@
 package org.whispersystems.textsecuregcm.tests.controllers;
 
+import com.amazonaws.services.s3.AmazonS3;
 import com.google.common.base.Optional;
 import org.glassfish.jersey.test.grizzly.GrizzlyWebTestContainerFactory;
 import org.junit.Before;
@@ -43,7 +44,8 @@ public class ProfileControllerTest {
                                                                    .setTestContainerFactory(new GrizzlyWebTestContainerFactory())
                                                                    .addResource(new ProfileController(rateLimiters,
                                                                                                       accountsManager,
-                                                                                                      configuration))
+                                                                                                      configuration,
+                                                                           mock(AmazonS3.class)))
                                                                    .build();
 
   @Before

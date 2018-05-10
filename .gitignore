@@ -10,3 +10,4 @@ config/federated.yml
 config/staging.yml
 .opsmanage
 put.sh
+docker-home

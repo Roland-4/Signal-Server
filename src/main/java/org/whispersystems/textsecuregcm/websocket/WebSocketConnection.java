@@ -47,7 +47,7 @@ public class WebSocketConnection implements DispatchChannel {
   private static final Logger logger = LoggerFactory.getLogger(WebSocketConnection.class);
 
   private final ReceiptSender    receiptSender;
-  private final PushSender       pushSender;
+  private final PushSender pushSender;
   private final MessagesManager  messagesManager;
 
   private final Account          account;

@@ -15,7 +15,6 @@ import org.whispersystems.textsecuregcm.storage.MessagesManager;
 import org.whispersystems.textsecuregcm.storage.PubSubManager;
 import org.whispersystems.textsecuregcm.storage.PubSubProtos.PubSubMessage;
 import org.whispersystems.textsecuregcm.util.Constants;
-import org.whispersystems.textsecuregcm.util.Util;
 import org.whispersystems.websocket.session.WebSocketSessionContext;
 import org.whispersystems.websocket.setup.WebSocketConnectListener;
 
@@ -30,7 +29,7 @@ public class AuthenticatedConnectListener implements WebSocketConnectListener {
   private static final Timer          durationTimer  = metricRegistry.timer(name(WebSocketConnection.class, "connected_duration"));
 
   private final AccountsManager    accountsManager;
-  private final PushSender         pushSender;
+  private final PushSender pushSender;
   private final ReceiptSender      receiptSender;
   private final MessagesManager    messagesManager;
   private final PubSubManager      pubSubManager;

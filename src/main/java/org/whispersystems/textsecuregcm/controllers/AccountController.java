@@ -134,7 +134,7 @@ public class AccountController {
     pendingAccounts.store(number, storedVerificationCode);
 
     if (testDevices.containsKey(number)) {
-      // noop
+      logger.info("TEST DEVICE account created verification code: {}", verificationCode);
     } else if (transport.equals("sms")) {
       smsSender.deliverSmsVerification(number, client, verificationCode.getVerificationCodeDisplay());
     } else if (transport.equals("voice")) {

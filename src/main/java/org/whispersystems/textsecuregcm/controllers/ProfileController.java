@@ -50,7 +50,8 @@ public class ProfileController {
 
   public ProfileController(RateLimiters rateLimiters,
                            AccountsManager accountsManager,
-                           ProfilesConfiguration profilesConfiguration)
+                           ProfilesConfiguration profilesConfiguration,
+                           AmazonS3 s3client)
   {
     AWSCredentials         credentials         = new BasicAWSCredentials(profilesConfiguration.getAccessKey(), profilesConfiguration.getAccessSecret());
     AWSCredentialsProvider credentialsProvider = new AWSStaticCredentialsProvider(credentials);
@@ -58,10 +59,7 @@ public class ProfileController {
     this.rateLimiters       = rateLimiters;
     this.accountsManager    = accountsManager;
     this.bucket             = profilesConfiguration.getBucket();
-    this.s3client           = AmazonS3Client.builder()
-                                            .withCredentials(credentialsProvider)
-                                            .withRegion(profilesConfiguration.getRegion())
-                                            .build();
+    this.s3client           = s3client;
 
     this.policyGenerator  = new PostPolicyGenerator(profilesConfiguration.getRegion(),
                                                     profilesConfiguration.getBucket(),
